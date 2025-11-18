@@ -218,47 +218,30 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   }
 
   private func handleURL(_ url: URL) {
-    guard url.scheme == "leaderkey" else { return }
+    let action = URLSchemeHandler.parse(url)
 
-    if url.host == "settings" {
+    switch action {
+    case .settings:
       showSettings()
-      return
-    }
-    if url.host == "about" {
+    case .about:
       NSApp.orderFrontStandardAboutPanel(nil)
-      return
-    }
-    if url.host == "config-reload" {
+    case .configReload:
       config.reloadFromFile()
-      return
-    }
-    if url.host == "config-reveal" {
+    case .configReveal:
       NSWorkspace.shared.selectFile(config.path, inFileViewerRootedAtPath: "")
-      return
-    }
-    if url.host == "activate" {
+    case .activate:
       activate()
-      return
-    }
-    if url.host == "hide" {
+    case .hide:
       hide()
-      return
-    }
-    if url.host == "reset" {
+    case .reset:
       state.clear()
+    case .navigate(let keys, let execute):
+      show()
+      processKeys(keys, execute: execute)
+    case .show:
+      show()
+    case .invalid:
       return
-    }
-
-    show()
-
-    if url.host == "navigate",
-      let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-      let queryItems = components.queryItems,
-      let keysParam = queryItems.first(where: { $0.name == "keys" })?.value
-    {
-      let keys = keysParam.split(separator: ",").map(String.init)
-      let shouldExecute = queryItems.first(where: { $0.name == "execute" })?.value != "false"
-      processKeys(keys, execute: shouldExecute)
     }
   }
 
